@@ -1,0 +1,9 @@
+[flake8]
+exclude =
+    ".*",
+    "__pycache__",
+    "poetry.lock",
+    "pyproject.toml",
+    "README.md"
+max_line_length = 88
+max_complexity = 18
