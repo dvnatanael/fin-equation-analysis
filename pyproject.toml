@@ -26,6 +26,28 @@ numpy = "^1.24.3"
 sympy = "^1.11.1"
 matplotlib = "^3.7.1"
 
+[tool.poe.tasks]
+test = "pytest --tb=short"
+black = "black --config=pyproject.toml"
+isort = "isort --settings-path=pyproject.toml"
+pycln = "pycln -a"
+mypy = "mypy --pretty"
+flake = "flake8 --exit-zero"
+
+[tool.poe.tasks.lint]
+sequence = [
+    { ref = "isort ${file}" },
+    { ref = "pycln ${file}" },
+    { ref = "black ${file}" },
+    { ref = "mypy" },
+    { ref = "flake" },
+]
+
+[[tool.poe.tasks.lint.args]]
+name = "file"
+positional = true
+multiple = true
+required = true
 
 [tool.black]
 target-version = ['py310']
