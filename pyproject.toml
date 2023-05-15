@@ -34,22 +34,24 @@ black = "black --config=pyproject.toml"
 isort = "isort --settings-path=pyproject.toml"
 pycln = "pycln -a"
 mypy = "mypy --pretty"
-flake = "flake8 --exit-zero"
+flake = "flake8"
 
 [tool.poe.tasks.lint]
 sequence = [
+    { cmd = "cls" },
     { ref = "isort ${file}" },
     { ref = "pycln ${file}" },
     { ref = "black ${file}" },
     { ref = "mypy" },
     { ref = "flake" },
 ]
+ignore_fail = true
 
 [[tool.poe.tasks.lint.args]]
 name = "file"
+default = "."
 positional = true
 multiple = true
-required = true
 
 [tool.black]
 target-version = ['py310']
