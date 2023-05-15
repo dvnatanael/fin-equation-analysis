@@ -67,7 +67,7 @@ silence = true
 
 [tool.mypy]
 mypy_path = "fin_equation_analysis"
-files = "fin_equation_analysis"
+files = "."
 explicit_package_bases = true
 namespace_packages = true
 strict = true
