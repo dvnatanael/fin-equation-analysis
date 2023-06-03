@@ -42,25 +42,33 @@ T_inf = 298  # K
 # In state-space form,
 # \begin{gathered}
 #     \begin{align*}
-#         y_0 &= \theta{(x)} & y_1 &= \theta'{(x)} = \frac{d \theta}{dx}
+#         y_0 &= \theta{(x)} & y_1 &= \theta'{(x)} = \frac{d \theta}{dx} \\
+#         y_2 &= A_c{(x)} & y_3 &= A_c'{(x)} = \frac{d A_c}{dx}\\
 #     \end{align*}\\
 #     \begin{equation*}
 #         \frac{d \textbf{y}}{dx}
-#         = \begin{bmatrix} y'_0 \\ y'_1 \end{bmatrix}
-#         = \begin{bmatrix} \theta' \\ \theta'' \end{bmatrix}
-#         = \begin{bmatrix} y_1 \\ - \left( \frac{1}{A_c} \frac{d A_c}{dx} \right) y_1 + \frac{h P}{k A_c} y_0 \end{bmatrix}
+#         = \begin{bmatrix} y'_0 \\ y'_1  \\ y'_2 \\ y'_3 \end{bmatrix}
+#         = \begin{bmatrix} \theta' \\ \theta'' \\ A'_c \\ A''_c \end{bmatrix}
+#         = \begin{bmatrix}
+#             y_1 \\
+#             - \frac{y_3}{y_2} y_1 + \frac{h P}{k y_2} y_0 \\
+#             y_3 \\
+#             ???
+#         \end{bmatrix}
 #     \end{equation*}
 # \end{gathered}
 
 
 # %%
 def deriv(x, y):
-    y0, y1 = y
+    y0, y1, y2, y3 = y
     return np.vstack(
         [
             y1,
             # circular pin fin
-            (2 * h) / (k * r) * y0,  # dAc/dx = 0
+            -y3 * y1 / y2 + (2 * h) / (k * r) * y0,
+            y3,
+            np.zeros_like(y0),  # linear profile
         ]
     )
 
@@ -71,47 +79,56 @@ def bc(ya, yb):
         [
             ya[0] - (T_b - T_inf),  # y0(x=a) = T_b - T_inf
             yb[0],  # y0(x=b) = 0; "infinite" fin
+            ya[2] - np.pi * r**2,  # y2(x=0) = np.pi * r**2
+            yb[2] - 1e-15,  # y2(x=b) = 0; reduces to a point
         ]
     )
 
 
 # %%
 x = np.linspace(0, L, 5)
-y = np.zeros((2, x.size))
+y = np.ones((4, x.size))
 
 # %%
 result = scipy.integrate.solve_bvp(fun=deriv, bc=bc, x=x, y=y)
 
 x_plot = np.linspace(0, L, 1001)
-T_plot, dT_plot = result.sol(x_plot)
+T_plot, dT_plot, Ac_plot, dAc_plot = result.sol(x_plot)
 
 # %%
 fig = plt.figure(1, figsize=(10, 10))
-gc = fig.add_gridspec(3, 1)
+gc = fig.add_gridspec(nrows=3, ncols=2)
 
 ax = fig.add_subplot(gc[0, 0])
-ax.plot(x_plot, T_inf + T_plot, label="numerical soln.")
-m = np.sqrt((2 * h) / (k * r))
-ax.plot(
-    x_plot,
-    T_inf + np.exp(-m * x_plot) * (T_b - T_inf),
-    ".",
-    markevery=40,
-    label="Eq. 3.84",
-)
-ax.legend()
+ax.plot(x_plot * 1e3, Ac_plot * 1e6)
+ax.set_ylabel(r"$A_c{(x)}$ [mm$^2$]")
+
+ax = fig.add_subplot(gc[0, 1], sharex=ax)
+ax.plot(x_plot * 1e3, dAc_plot * 1e3)
+ax.set_ylabel(r"$A'_c{(x)}$ [mm]")
+
+ax = fig.add_subplot(gc[1, 0], sharex=ax)
+ax.plot(x_plot * 1e3, T_inf + T_plot)
 ax.set_ylabel(r"$T{(x)}$ [K]")
 
-ax = fig.add_subplot(gc[1, 0])
-ax.plot(x_plot, -k * dT_plot)
-ax.set_ylabel(r"$q''_x = -k T'{(x)}$ [W / m$^2$]")
+ax = fig.add_subplot(gc[1, 1], sharex=ax)
+ax.plot(x_plot * 1e3, 3 - np.log10(-dT_plot))
+yticklabels = ax.get_yticklabels()
+for text in yticklabels:
+    text.set_text(f"$10^{{{text.get_text()}}}$")
+ax.set_yticks([y for y in ax.get_yticks()[1:-1]])
+ax.set_yticklabels(yticklabels[1:-1])
+ax.set_ylabel(r"$T'{(x)}$ [K / mm]")
 
-ax = fig.add_subplot(gc[2, 0])
-A_c = np.pi * r**2
-ax.plot(x_plot, -k * A_c * dT_plot)
+ax = fig.add_subplot(gc[2, 0], sharex=ax)
+ax.semilogy(x_plot * 1e3, -k * dT_plot * 1e-6)
+ax.set_ylabel(r"$q''_x = -k T'{(x)}$ [W / mm$^2$]")
+
+ax = fig.add_subplot(gc[2, 1], sharex=ax)
+ax.plot(x_plot * 1e3, -k * Ac_plot * dT_plot)
 ax.set_ylabel(r"$q_x = -k A_c T'{(x)}$ [W]")
 
 for ax in fig.axes:
+    ax.set_xlabel(r"x [mm]")
     ax.grid(True)
-    ax.set_xlabel(r"$x$ [m]")
 plt.tight_layout()
