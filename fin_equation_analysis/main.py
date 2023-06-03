@@ -1,12 +1,12 @@
 from sympy import *  # nopycln: import
 from sympy import symbols
 
-from fin_equation_analysis import profile
+from fin_equation_analysis import cross_section
 from fin_equation_analysis.fin import Fin
 
 
-profile = profile.Circle()
-fin = Fin(profile)
+cross_section = cross_section.Circle()
+fin = Fin(cross_section)
 print(fin.equation)
 
 L = symbols("L")

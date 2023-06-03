@@ -1,9 +1,9 @@
 from sympy import Expr, Integer, Rational, Symbol, pi, sin, sqrt, symbols
 
-from .profile import UniformProfile
+from .CrossSection import UniformCrossSection
 
 
-class Triangle(UniformProfile):
+class Triangle(UniformCrossSection):
     """A class that represents a fin with a uniform isosceles triangular profile
     of base `b` and height `h`.
     """
@@ -21,7 +21,7 @@ class Triangle(UniformProfile):
         return Rational(1, 2) * self.b * self.h
 
 
-class Rectangle(UniformProfile):
+class Rectangle(UniformCrossSection):
     """A class that represents a fin with a uniform rectangular profile
     of thickness `t` and width `w`.
     """
@@ -89,7 +89,7 @@ class Hexagon(UniformCrossSection):
         super().__init__(6)
 
 
-class Circle(UniformProfile):
+class Circle(UniformCrossSection):
     """A class that represents a fin with a uniform circular profile of radius `r`."""
 
     def __init__(self, f: Expr | None = None) -> None:

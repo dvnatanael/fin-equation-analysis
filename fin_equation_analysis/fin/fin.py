@@ -2,13 +2,15 @@ from typing import Any
 
 from sympy import Equality, Expr, Function, Symbol, dsolve, symbols
 
-from ..profile import Profile
+from ..cross_section import CrossSection
 
 
 class Fin:
-    def __init__(self, profile: Profile) -> None:
-        self.profile = profile
-        self._vars: dict[str, Symbol | Expr | Function] = {"profile": profile}
+    def __init__(self, cross_section: CrossSection) -> None:
+        self.cross_section = cross_section
+        self._vars: dict[str, Symbol | Expr | Function] = {
+            "cross_section": cross_section
+        }
 
         # variables
         self.T_b: Symbol = symbols("T_b", positive=True)
@@ -21,11 +23,11 @@ class Fin:
         # functions
         self.T: Function = symbols("T", cls=Function, positive=True)(self.x)
 
-        self.P: Expr | Function = profile.P
+        self.P: Expr | Function = cross_section.P
         if isinstance(self.P, Function):
             self.P = self.P(self.x)
 
-        self.A_c: Expr | Function = profile.A_c
+        self.A_c: Expr | Function = cross_section.A_c
         if isinstance(self.A_c, Function):
             self.A_c = self.A_c(self.x)
 

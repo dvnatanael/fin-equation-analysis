@@ -1,11 +1,11 @@
+from .CrossSection import CrossSection, NonUniformCrossSection, UniformCrossSection
 from .polygon import Circle, Hexagon, Rectangle, ThinRectangle, Triangle
-from .profile import NonUniformProfile, Profile, UniformProfile
 
 
 __all__ = [
-    "Profile",
-    "UniformProfile",
-    "NonUniformProfile",
+    "CrossSection",
+    "UniformCrossSection",
+    "NonUniformCrossSection",
     "Triangle",
     "Rectangle",
     "ThinRectangle",

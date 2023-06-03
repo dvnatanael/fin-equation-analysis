@@ -3,7 +3,7 @@ from abc import ABCMeta, abstractmethod
 from sympy import Expr, Function
 
 
-class Profile(metaclass=ABCMeta):
+class CrossSection(metaclass=ABCMeta):
     @property
     @abstractmethod
     def P(self) -> Expr | Function:
@@ -15,9 +15,9 @@ class Profile(metaclass=ABCMeta):
         ...
 
 
-class UniformProfile(metaclass=ABCMeta):
+class UniformCrossSection(metaclass=ABCMeta):
     pass
 
 
-class NonUniformProfile(metaclass=ABCMeta):
+class NonUniformCrossSection(metaclass=ABCMeta):
     pass
