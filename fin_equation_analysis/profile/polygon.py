@@ -86,27 +86,11 @@ class Hexagon(UniformCrossSection):
     """
 
     def __init__(self) -> None:
-        self.r: Symbol = symbols("r", positive=True)  # radius of inscribing circle
-
-    @property
-    def P(self) -> Expr:
-        return 6 * self.r
-
-    @property
-    def A_c(self) -> Expr:
-        return Rational(3, 2) * sqrt(3) * self.r**2
+        super().__init__(6)
 
 
 class Circle(UniformProfile):
     """A class that represents a fin with a uniform circular profile of radius `r`."""
 
-    def __init__(self) -> None:
-        self.r: Symbol = symbols("r", positive=True)  # radius
-
-    @property
-    def P(self) -> Expr:
-        return 2 * pi * self.r
-
-    @property
-    def A_c(self) -> Expr:
-        return pi * self.r**2
+    def __init__(self, f: Expr | None = None) -> None:
+        super().__init__()
