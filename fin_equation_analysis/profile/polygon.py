@@ -1,4 +1,4 @@
-from sympy import Expr, Rational, Symbol, pi, sqrt, symbols
+from sympy import Expr, Integer, Rational, Symbol, pi, sin, sqrt, symbols
 
 from .profile import UniformProfile
 
@@ -47,6 +47,37 @@ class ThinRectangle(Rectangle):
     @property
     def P(self) -> Expr:
         return 2 * self.w
+
+
+class RegularPolygon(UniformCrossSection):
+    """A class that represents a fin with a uniform regular polygon
+    of equal sides inscribed in a circle of radius `r`.
+    """
+
+    def __init__(self, n: int | None = None) -> None:
+        self.r: Symbol = symbols("r", positive=True)  # radius of inscribed circle
+
+        self.n: Integer | None
+        if n is None:
+            self.n = None  # shape is a circle
+        elif n < 3:
+            raise ValueError(f"The number of sides must be at least 3, got {n}.")
+        else:
+            self.n = Integer(n)  # number of sides of polygon
+
+    @property
+    def P(self) -> Expr:
+        if self.n is None:
+            return 2 * pi * self.r
+        else:
+            return 2 * self.n * sin(pi / n) * self.r
+
+    @property
+    def A_c(self) -> Expr:
+        if self.n is None:
+            return pi * self.r**2
+        else:
+            return Rational(1, 2) * self.n * sin(2 * pi / self.n) * self.r**2
 
 
 class Hexagon(UniformCrossSection):
