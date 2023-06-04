@@ -14,19 +14,20 @@
 # ---
 
 # %%
+from typing import final
+
 import numpy as np
 import scipy.integrate
 from matplotlib import pyplot as plt
 
 
 # %%
-k = 5  # W m-1 K-1
-h = 200  # W m-2 K-1
-r = 3e-2  # m
-L = 0.1  # m
-T_b = 398  # K
-T_inf = 298  # K
-
+k: final = 5  # W m-1 K-1
+h: final = 200  # W m-2 K-1
+r: final = 3e-2  # m
+L: final = 0.1  # m
+T_b: final = 398  # K
+T_inf: final = 298  # K
 
 # %% [markdown]
 # The general fin equation is given by
@@ -74,11 +75,11 @@ def deriv(x, y):
 
 
 # %%
-def bc(ya, yb):
+def bc_uniform(ya, yb):
     return np.array(
         [
             ya[0] - (T_b - T_inf),  # y0(x=a) = T_b - T_inf
-            yb[1],  # y1(x=b) = 0; adiabatic tip
+            yb[1],  # y0(x=b) = 0; adiabatic tip
             ya[2] - np.pi * r**2,  # y2(x=0) = np.pi * r**2
             yb[2] - np.pi * r**2,  # y2(x=b) = np.pi * r**2
         ]
@@ -86,22 +87,11 @@ def bc(ya, yb):
 
 
 # %%
-x = np.linspace(0, L, 5)
-y = np.ones((4, x.size))
-
-# %%
-result = scipy.integrate.solve_bvp(fun=deriv, bc=bc, x=x, y=y)
-
-x_plot = np.linspace(0, L, 1001)
-T_plot, dT_plot, Ac_plot, dAc_plot = result.sol(x_plot)
-
-
-# %%
-def bc(ya, yb):
+def bc_linear(ya, yb):
     return np.array(
         [
             ya[0] - (T_b - T_inf),  # y0(x=a) = (T_b - T_inf)
-            yb[1],  # y0(x=b) = 0; adiabatic tip
+            yb[1],  # y1(x=b) = 0; adiabatic tip
             # circular cross section
             ya[2] - np.pi * r**2,  # y2(x=0) = np.pi * r**2
             yb[2] - 1e-15,  # y2(x=b) = 0; reduces to a point
@@ -110,43 +100,45 @@ def bc(ya, yb):
 
 
 # %%
-result = scipy.integrate.solve_bvp(fun=deriv, bc=bc, x=x, y=y)
+def plot_results(
+    fig: plt.Figure,
+    res: scipy.integrate._bvp.BVPResult,
+    x: np.ndarray,
+    label: str,
+) -> None:
+    T, dT, Ac, dAc = res.sol(x)
+    axs = fig.axes
+    axs[0].plot(x * 1e3, Ac * 1e6, label=label)
+    axs[0].set_ylabel(r"$A_c{(x)}$ [mm$^2$]")
 
-T2_plot, dT2_plot, Ac2_plot, dAc2_plot = result.sol(x_plot)
+    axs[1].plot(x * 1e3, dAc * 1e3, label=label)
+    axs[1].set_ylabel(r"$A'_c{(x)}$ [mm]")
+
+    axs[2].plot(x * 1e3, T_inf + T, label=label)
+    axs[2].set_ylabel(r"$T{(x)}$ [K]")
+
+    axs[3].plot(x * 1e3, dT * 1e-3, label=label)
+    axs[3].set_ylabel(r"$T'{(x)}$ [K / mm]")
+
+    axs[4].plot(x * 1e3, -k * dT * 1e-6, label=label)
+    axs[4].set_ylabel(r"$q''_x = -k T'{(x)}$ [W / mm$^2$]")
+
+    axs[5].plot(x * 1e3, -k * Ac * dT, label=label)
+    axs[5].set_ylabel(r"$q_x = -k A_c T'{(x)}$ [W]")
+
 
 # %%
-fig = plt.figure(1, figsize=(10, 10))
-gc = fig.add_gridspec(nrows=3, ncols=2)
+x = np.linspace(0, L, 5)
+y = np.ones((4, x.size))
 
-ax = fig.add_subplot(gc[0, 0])
-ax.plot(x_plot * 1e3, Ac_plot * 1e6, label="constant cross-section")
-ax.plot(x_plot * 1e3, Ac2_plot * 1e6, label="linear profile")
-ax.set_ylabel(r"$A_c{(x)}$ [mm$^2$]")
+result_uniform = scipy.integrate.solve_bvp(fun=deriv, bc=bc_uniform, x=x, y=y)
+result_linear = scipy.integrate.solve_bvp(fun=deriv, bc=bc_linear, x=x, y=y)
 
-ax = fig.add_subplot(gc[0, 1], sharex=ax)
-ax.plot(x_plot * 1e3, dAc_plot * 1e3, label="constant cross-section")
-ax.plot(x_plot * 1e3, dAc2_plot * 1e3, label="linear profile")
-ax.set_ylabel(r"$A'_c{(x)}$ [mm]")
-
-ax = fig.add_subplot(gc[1, 0], sharex=ax)
-ax.plot(x_plot * 1e3, T_inf + T_plot, label="constant cross-section")
-ax.plot(x_plot * 1e3, T_inf + T2_plot, label="linear profile")
-ax.set_ylabel(r"$T{(x)}$ [K]")
-
-ax = fig.add_subplot(gc[1, 1], sharex=ax)
-ax.plot(x_plot * 1e3, dT_plot * 1e-3, label="constant cross-section")
-ax.plot(x_plot * 1e3, dT2_plot * 1e-3, label="linear profile")
-ax.set_ylabel(r"$T'{(x)}$ [K / mm]")
-
-ax = fig.add_subplot(gc[2, 0], sharex=ax)
-ax.plot(x_plot * 1e3, -k * dT_plot * 1e-6, label="constant cross-section")
-ax.plot(x_plot * 1e3, -k * dT2_plot * 1e-6, label="linear profile")
-ax.set_ylabel(r"$q''_x = -k T'{(x)}$ [W / mm$^2$]")
-
-ax = fig.add_subplot(gc[2, 1], sharex=ax)
-ax.plot(x_plot * 1e3, -k * Ac_plot * dT_plot, label="constant cross-section")
-ax.plot(x_plot * 1e3, -k * Ac2_plot * dT2_plot, label="linear profile")
-ax.set_ylabel(r"$q_x = -k A_c T'{(x)}$ [W]")
+# %%
+fig, _ = plt.subplots(num=1, figsize=(10, 12), nrows=3, ncols=2, sharex="all")
+x_plot = np.linspace(0, L, 100001)
+plot_results(fig, result_uniform, x_plot, "constant cross-section")
+plot_results(fig, result_linear, x_plot, "linear profile")
 
 for ax in fig.axes:
     ax.set_xlabel(r"x [mm]")
