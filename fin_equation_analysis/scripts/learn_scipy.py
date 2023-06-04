@@ -14,11 +14,15 @@
 # ---
 
 # %%
+from abc import ABCMeta, abstractmethod
 from typing import final
 
 import numpy as np
-import scipy.integrate
+import scipy.special
 from matplotlib import pyplot as plt
+from scipy.interpolate import PPoly
+
+from fin_equation_analysis.fin.fin import Fin
 
 
 # %%
@@ -28,6 +32,48 @@ r: final = 3e-2  # m
 L: final = 0.1  # m
 T_b: final = 398  # K
 T_inf: final = 298  # K
+
+
+# %%
+class CircularPinFin(Fin, metaclass=ABCMeta):
+    def __init__(
+        self,
+        k: int | float,
+        h: int | float,
+        r: int | float,
+        L: int | float,
+        Tb: int | float,
+        Tinf: int | float,
+    ) -> None:
+        self.k = k
+        self.h = h
+        self.r0 = r
+        self.L = L
+        self.Tb = Tb
+        self.Tinf = Tinf
+
+    @abstractmethod
+    def r(self, x: np.ndarray) -> np.ndarray:
+        ...
+
+    def P(self, x: np.ndarray) -> np.ndarray:
+        return 2 * np.pi * self.r(x)
+
+    def d2Ac_dx2(self, x: np.ndarray) -> np.ndarray:
+        return np.zeros_like(x)
+
+
+# %%
+class CircularUniformPinFin(CircularPinFin):
+    def r(self, x: np.ndarray) -> np.ndarray:
+        return self.r0
+
+
+# %%
+class CircularLinearPinFin(CircularPinFin):
+    def r(self, x: np.ndarray) -> np.ndarray:
+        return self.r0 * (1 - x / self.L)
+
 
 # %% [markdown]
 # The general fin equation is given by
@@ -61,20 +107,6 @@ T_inf: final = 298  # K
 
 
 # %%
-def deriv(x, y):
-    y0, y1, y2, y3 = y
-    return np.vstack(
-        [
-            y1,
-            # circular pin fin
-            -y3 * y1 / y2 + (2 * h) / (k * (np.sqrt(np.abs(y2 / np.pi)))) * y0,
-            y3,
-            np.zeros_like(y0),  # linear profile
-        ]
-    )
-
-
-# %%
 def bc_uniform(ya, yb):
     return np.array(
         [
@@ -92,9 +124,8 @@ def bc_linear(ya, yb):
         [
             ya[0] - (T_b - T_inf),  # y0(x=a) = (T_b - T_inf)
             yb[1],  # y1(x=b) = 0; adiabatic tip
-            # circular cross section
             ya[2] - np.pi * r**2,  # y2(x=0) = np.pi * r**2
-            yb[2] - 1e-15,  # y2(x=b) = 0; reduces to a point
+            yb[2] - 1e-14,  # y2(x=b) = 0; reduces to a point
         ]
     )
 
@@ -102,11 +133,11 @@ def bc_linear(ya, yb):
 # %%
 def plot_results(
     fig: plt.Figure,
-    res: scipy.integrate._bvp.BVPResult,
+    sol: tuple[PPoly, PPoly, PPoly, PPoly],
     x: np.ndarray,
     label: str,
 ) -> None:
-    T, dT, Ac, dAc = res.sol(x)
+    T, dT, Ac, dAc = sol
     axs = fig.axes
     axs[0].plot(x * 1e3, Ac * 1e6, label=label)
     axs[0].set_ylabel(r"$A_c{(x)}$ [mm$^2$]")
@@ -128,26 +159,24 @@ def plot_results(
 
 
 # %%
-x = np.linspace(0, L, 5)
-y = np.ones((4, x.size))
-
-result_uniform = scipy.integrate.solve_bvp(fun=deriv, bc=bc_uniform, x=x, y=y)
-result_linear = scipy.integrate.solve_bvp(fun=deriv, bc=bc_linear, x=x, y=y)
+x_plot = np.linspace(0, L, 100001)
+sol_uniform = CircularUniformPinFin(k, h, r, L, T_b, T_inf).solve(bc_uniform)(x_plot)
+sol_linear = CircularLinearPinFin(k, h, r, L, T_b, T_inf).solve(bc_linear)(x_plot)
 
 # %%
 fig, _ = plt.subplots(num=1, figsize=(10, 12), nrows=3, ncols=2, sharex="all")
-x_plot = np.linspace(0, L, 100001)
-plot_results(fig, result_uniform, x_plot, "constant cross-section")
-plot_results(fig, result_linear, x_plot, "linear profile")
+plot_results(fig, sol_uniform, x_plot, "constant cross-section")
+plot_results(fig, sol_linear, x_plot, "linear profile")
 
 for ax in fig.axes:
     ax.set_xlabel(r"x [mm]")
     ax.grid(True)
+    ax.legend()
 plt.tight_layout()
 
 # %%
-_, dT_uniform, Ac_uniform, _ = result_uniform.sol(x_plot)
-_, dT_linear, Ac_linear, _ = result_linear.sol(x_plot)
+_, dT_uniform, Ac_uniform, _ = sol_uniform
+_, dT_linear, Ac_linear, _ = sol_linear
 q_uniform = (-k * Ac_uniform * dT_uniform)[5]
 q_linear = (-k * Ac_linear * dT_linear)[5]
 f"{q_uniform = }", f"{q_linear = }"
