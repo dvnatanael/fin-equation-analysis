@@ -144,3 +144,35 @@ for ax in fig.axes:
     ax.set_xlabel(r"x [mm]")
     ax.grid(True)
 plt.tight_layout()
+
+# %%
+_, dT_uniform, Ac_uniform, _ = result_uniform.sol(x_plot)
+_, dT_linear, Ac_linear, _ = result_linear.sol(x_plot)
+q_uniform = (-k * Ac_uniform * dT_uniform)[5]
+q_linear = (-k * Ac_linear * dT_linear)[5]
+f"{q_uniform = }", f"{q_linear = }"
+
+# %%
+n_uniform = q_uniform / (h * 2 * np.pi * r * L * (T_b - T_inf))
+n_linear = q_linear / (h * np.pi * r * np.sqrt(L**2 + r**2) * (T_b - T_inf))
+f"{n_uniform = }", f"{n_linear = }"
+
+# %%
+M = np.sqrt(h * (2 * np.pi * r) * k * (np.pi * r**2)) * (T_b - T_inf)
+m = np.sqrt((2 * h) / (k * r))
+M, m, m * L
+
+# %%
+q_uniform = M * np.tanh(m * L)
+q_linear = (
+    M
+    * np.sqrt(1 - (r / L) ** 2)
+    * scipy.special.iv(2, 2 * m * L)
+    / scipy.special.iv(1, 2 * m * L)
+)
+f"{q_uniform = }", f"{q_linear = }"
+
+# %%
+n_uniform = np.tanh(m * L) / (m * L)
+n_linear = 2 / (m * L) * scipy.special.iv(2, 2 * m * L) / scipy.special.iv(1, 2 * m * L)
+f"{n_uniform = }", f"{n_linear = }"
