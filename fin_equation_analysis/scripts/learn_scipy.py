@@ -54,7 +54,7 @@ T_inf: final = 298  # K
 #             y_1 \\
 #             - \frac{y_3}{y_2} y_1 + \frac{h P}{k y_2} y_0 \\
 #             y_3 \\
-#             ???
+#             \cdots
 #         \end{bmatrix}
 #     \end{equation*}
 # \end{gathered}
@@ -67,7 +67,7 @@ def deriv(x, y):
         [
             y1,
             # circular pin fin
-            -y3 * y1 / y2 + (2 * h) / (k * r) * y0,
+            -y3 * y1 / y2 + (2 * h) / (k * (np.sqrt(np.abs(y2 / np.pi)))) * y0,
             y3,
             np.zeros_like(y0),  # linear profile
         ]
@@ -79,7 +79,7 @@ def bc_uniform(ya, yb):
     return np.array(
         [
             ya[0] - (T_b - T_inf),  # y0(x=a) = T_b - T_inf
-            yb[1],  # y0(x=b) = 0; adiabatic tip
+            yb[1],  # y1(x=b) = 0; adiabatic tip
             ya[2] - np.pi * r**2,  # y2(x=0) = np.pi * r**2
             yb[2] - np.pi * r**2,  # y2(x=b) = np.pi * r**2
         ]
@@ -166,7 +166,7 @@ M, m, m * L
 q_uniform = M * np.tanh(m * L)
 q_linear = (
     M
-    * np.sqrt(1 - (r / L) ** 2)
+    * np.sqrt(1 + (r / L) ** 2)
     * scipy.special.iv(2, 2 * m * L)
     / scipy.special.iv(1, 2 * m * L)
 )
