@@ -15,7 +15,7 @@
 
 # %%
 from abc import ABCMeta, abstractmethod
-from typing import final
+from typing import Final
 
 import numpy as np
 import scipy.special
@@ -26,12 +26,12 @@ from fin_equation_analysis.fin.fin import Fin
 
 
 # %%
-k: final = 5  # W m-1 K-1
-h: final = 200  # W m-2 K-1
-r: final = 3e-2  # m
-L: final = 0.1  # m
-T_b: final = 398  # K
-T_inf: final = 298  # K
+k: Final[int] = 5  # W m-1 K-1
+h: Final[int] = 200  # W m-2 K-1
+r: Final[float] = 3e-2  # m
+L: Final[float] = 0.1  # m
+T_b: Final[int] = 398  # K
+T_inf: Final[int] = 298  # K
 
 
 # %%
