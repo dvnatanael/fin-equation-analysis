@@ -36,7 +36,7 @@ T_inf: Final[float] = 298.0  # K
 # %%
 def plot_results(
     fig: plt.Figure,
-    sol: tuple[np_arr_f64, np_arr_f64, np_arr_f64, np_arr_f64, np_arr_f64, np_arr_f64],
+    sol: tuple[np_arr_f64, np_arr_f64, np_arr_f64, np_arr_f64, np_arr_f64],
     x: np_arr_f64,
     label: str,
 ) -> None:
