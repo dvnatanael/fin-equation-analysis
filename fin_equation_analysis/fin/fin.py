@@ -5,17 +5,10 @@ from typing import Callable, final
 import numpy as np
 import scipy
 import scipy.integrate
-from numpy import typing as npt
 from scipy.interpolate import PPoly
 
-
-np_arr_f64 = npt.NDArray[np.float64]
-
-
-class CrossSection(metaclass=ABCMeta):
-    @abstractmethod
-    def P(self, Ac: np_arr_f64) -> np_arr_f64:
-        ...
+from .cross_section import CrossSection
+from .types import np_arr_f64
 
 
 @dataclass

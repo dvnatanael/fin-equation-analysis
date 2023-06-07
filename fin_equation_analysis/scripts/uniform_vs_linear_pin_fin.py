@@ -20,7 +20,17 @@ from typing import Final
 import numpy as np
 from matplotlib import pyplot as plt
 
-from fin_equation_analysis.fin.fin import CrossSection, Fin, np_arr_f64
+from fin_equation_analysis.fin.cross_section import CircularCrossSection
+from fin_equation_analysis.fin.fin import Fin, np_arr_f64
+
+
+# %%
+k: Final[float] = 5e-3  # W mm-1 K-1
+h: Final[float] = 200e-6  # W mm-2 K-1
+r: Final[float] = 1e-1  # mm
+L: Final[float] = 5e0  # mm
+T_b: Final[float] = 398.0  # K
+T_inf: Final[float] = 298.0  # K
 
 
 # %%
@@ -58,30 +68,15 @@ def plot_results(
 
 
 # %%
-k: Final[float] = 5e-3  # W mm-1 K-1
-h: Final[float] = 200e-6  # W mm-2 K-1
-r: Final[float] = 1e-1  # mm
-L: Final[float] = 5e0  # mm
-T_b: Final[float] = 398.0  # K
-T_inf: Final[float] = 298.0  # K
-
-
-# %%
-class CircularCrossSection(CrossSection):
-    def P(self, Ac: np_arr_f64) -> np_arr_f64:
-        return 2 * np.sqrt(np.pi * np.abs(Ac))
-
-
-# %%
 @dataclass
-class CircularUniformPinFin(Fin, CircularCrossSection):
+class CircularUniformPinFin(CircularCrossSection, Fin):
     def d2Ac_dx2(self, x: np_arr_f64, y: np_arr_f64) -> np_arr_f64:
         return np.zeros_like(x)
 
 
 # %%
 @dataclass
-class CircularLinearPinFin(Fin, CircularCrossSection):
+class CircularLinearPinFin(CircularCrossSection, Fin):
     def d2Ac_dx2(self, x: np_arr_f64, y: np_arr_f64) -> np_arr_f64:
         return np.full_like(x, 2 * y[3][0] / L**2)
 
