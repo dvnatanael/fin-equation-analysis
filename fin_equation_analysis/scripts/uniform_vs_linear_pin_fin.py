@@ -20,7 +20,7 @@ from typing import Final
 import numpy as np
 from matplotlib import pyplot as plt
 
-from fin_equation_analysis.fin.cross_section import Circle
+from fin_equation_analysis.fin.cross_section import CircleCrossSection
 from fin_equation_analysis.fin.fin import Fin
 from fin_equation_analysis.fin.types import np_arr_f64
 
@@ -70,14 +70,14 @@ def plot_results(
 
 # %%
 @dataclass
-class CircularUniformPinFin(Circle, Fin):
+class CircularUniformPinFin(CircleCrossSection, Fin):
     def d2Ac_dx2(self, x: np_arr_f64, y: np_arr_f64) -> np_arr_f64:
         return np.zeros_like(x)
 
 
 # %%
 @dataclass
-class CircularLinearPinFin(Circle, Fin):
+class CircularLinearPinFin(CircleCrossSection, Fin):
     def d2Ac_dx2(self, x: np_arr_f64, y: np_arr_f64) -> np_arr_f64:
         return np.full_like(x, 2 * y[3][0] / L**2)
 
