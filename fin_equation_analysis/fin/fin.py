@@ -28,7 +28,7 @@ class Fin(CrossSection, metaclass=ABCMeta):
         return np.vstack(
             [
                 y1,
-                -y4 * y1 / y3 + (self.h * self.P(y3)) / (self.k * y3) * y0,
+                -y4 * y1 / y3 + (self.h * self.P(np.abs(y3))) / (self.k * y3) * y0,
                 y3,
                 y4,
                 self.d2Ac_dx2(x, y),
