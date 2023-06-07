@@ -130,13 +130,13 @@ def bc_uniform(ya, yb):
     return np.array(
         [
             # Temperature BCs
-            ya[0] - (T_b - T_inf),  # y0(x=a) = T_b - T_inf
-            yb[1],  # y1(x=b) = 0; adiabatic tip
+            ya[0] - (T_b - T_inf),  # θ(0) = T_b - T_inf
+            yb[1],  # θ(L) = 0; adiabatic tip
             # Geometry BCs
             ya[2],
-            ya[3] - np.pi * r**2,  # y2(x=0) = np.pi * r**2
-            yb[3] - np.pi * r**2,  # y2(x=b) = np.pi * r**2
-            ya[5] - 2 * np.pi * r,
+            ya[3] - np.pi * r**2,  # Ac(0) = πr²
+            yb[3] - np.pi * r**2,  # Ac(L) = πr²
+            ya[5] - 2 * np.pi * r,  # P(0) = 2πr
         ]
     )
 
@@ -146,13 +146,13 @@ def bc_linear(ya, yb):
     return np.array(
         [
             # Temperature BCs
-            ya[0] - (T_b - T_inf),  # y0(x=a) = T_b - T_inf
-            yb[1],  # y1(x=b) = 0; adiabatic tip
+            ya[0] - (T_b - T_inf),  # θ(0) = T_b - T_inf
+            yb[1],  # θ(L) = 0; adiabatic tip
             # Geometry BCs
-            ya[2],
-            ya[3] - np.pi * r**2,  # y2(x=0) = np.pi * r**2
-            yb[3] - 1e-13,  # y2(x=b) = 0; reduces to a point
-            ya[5] - 2 * np.pi * r,
+            ya[2],  # V(0) = 0
+            ya[3] - np.pi * r**2,  # Ac(0) = πr²
+            yb[3] - 1e-13,  # Ac(L) = 0; reduces to a point
+            ya[5] - 2 * np.pi * r,  # P(0) = 2πr
         ]
     )
 
