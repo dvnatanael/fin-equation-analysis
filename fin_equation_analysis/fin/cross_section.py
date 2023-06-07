@@ -16,11 +16,6 @@ class Circle(CrossSection):
         return 2 * np.sqrt(np.pi * np.abs(Ac))
 
 
-class Square(CrossSection):
-    def P(self, Ac: np_arr_f64) -> np_arr_f64:
-        return 4 * np.sqrt(Ac)
-
-
 class RectangleMeta(type):
     def __init__(self, name: str, w: float) -> None:
         super().__init__(self)
@@ -34,16 +29,20 @@ class RectangleMeta(type):
         return np.full_like(Ac, 2 * self.w)
 
 
-class EquilateralTriangle(CrossSection):
+class RegularPolygonMeta(type):
+    def __init__(self, name: str, n: int) -> None:
+        super().__init__(self)
+
+    def __new__(cls, name: str, n: int) -> type:
+        kls = super().__new__(cls, name, (), {"n": n, "P": RegularPolygonMeta.P})
+        return kls
+
+    @staticmethod
     def P(self, Ac: np_arr_f64) -> np_arr_f64:
-        return 6 * np.sqrt(Ac) / 3**0.25
+        return 2 * np.sqrt(self.n * np.tan(np.pi / self.n) * Ac)
 
 
-class RegularPentagon(CrossSection):
-    def P(self, Ac: np_arr_f64) -> np_arr_f64:
-        return 2 * np.sqrt(5 * np.tan(np.pi / 5) * Ac)
-
-
-class RegularHexagon(CrossSection):
-    def P(self, Ac: np_arr_f64) -> np_arr_f64:
-        return 2 * np.sqrt(2 * Ac) * 3**0.25
+EquilateralTriangle = RegularPolygonMeta(3)
+Square = RegularPolygonMeta(4)
+RegularPentagon = RegularPolygonMeta(5)
+RegulareHexagon = RegularPolygonMeta(6)
