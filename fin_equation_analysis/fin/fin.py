@@ -1,30 +1,34 @@
 from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass
-from typing import Callable, cast, final
+from typing import Callable, final
 
 import numpy as np
 import scipy
 import scipy.integrate
+from numpy import typing as npt
 from scipy.interpolate import PPoly
+
+
+np_arr_f64 = npt.NDArray[np.float64]
 
 
 @dataclass
 class Fin(metaclass=ABCMeta):
-    k: int | float
-    h: int | float
-    L: int | float
-    Tb: int | float
-    Tinf: int | float
+    k: float
+    h: float
+    L: float
+    Tb: float
+    Tinf: float
 
     @abstractmethod
-    def dP_dx(self, x: np.ndarray) -> np.ndarray:
+    def dP_dx(self, x: np_arr_f64) -> np_arr_f64:
         ...
 
     @abstractmethod
-    def d2Ac_dx2(self, x: np.ndarray) -> np.ndarray:
+    def d2Ac_dx2(self, x: np_arr_f64) -> np_arr_f64:
         ...
 
-    def deriv(self, x, y) -> np.ndarray:
+    def deriv(self, x: np_arr_f64, y: np_arr_f64) -> np_arr_f64:
         y0, y1, _, y3, y4, y5 = y
         return np.vstack(
             [
@@ -40,13 +44,10 @@ class Fin(metaclass=ABCMeta):
     @final
     def solve(
         self,
-        bc: Callable[[np.ndarray, np.ndarray], np.ndarray],
-    ) -> tuple[PPoly, PPoly, PPoly, PPoly, PPoly, PPoly]:
+        bc: Callable[[np_arr_f64, np_arr_f64], np_arr_f64],
+    ) -> PPoly:
         x = np.linspace(0, self.L, 500)
         y = np.ones((6, x.size))
 
         self.res = scipy.integrate.solve_bvp(fun=self.deriv, bc=bc, x=x, y=y)
-        return cast(
-            tuple[PPoly, PPoly, PPoly, PPoly, PPoly, PPoly],
-            self.res.sol,
-        )
+        return self.res.sol

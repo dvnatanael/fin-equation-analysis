@@ -19,16 +19,15 @@ from typing import Final
 
 import numpy as np
 from matplotlib import pyplot as plt
-from scipy.interpolate import PPoly
 
-from fin_equation_analysis.fin.fin import Fin
+from fin_equation_analysis.fin.fin import Fin, np_arr_f64
 
 
 # %%
 def plot_results(
     fig: plt.Figure,
-    sol: tuple[[PPoly] * 6],
-    x: np.ndarray,
+    sol: tuple[np_arr_f64, np_arr_f64, np_arr_f64, np_arr_f64, np_arr_f64, np_arr_f64],
+    x: np_arr_f64,
     label: str,
 ) -> None:
     T, dT, V, Ac, dAc, P = sol
@@ -59,12 +58,12 @@ def plot_results(
 
 
 # %%
-k: Final[int] = 5e-3  # W mm-1 K-1
-h: Final[int] = 200e-6  # W mm-2 K-1
+k: Final[float] = 5e-3  # W mm-1 K-1
+h: Final[float] = 200e-6  # W mm-2 K-1
 r: Final[float] = 3e1  # mm
 L: Final[float] = 1e2  # mm
-T_b: Final[int] = 398  # K
-T_inf: Final[int] = 298  # K
+T_b: Final[float] = 398.0  # K
+T_inf: Final[float] = 298.0  # K
 
 
 # %%
@@ -72,10 +71,10 @@ T_inf: Final[int] = 298  # K
 class CircularUniformPinFin(Fin):
     r0: int | float
 
-    def dP_dx(self, x: np.ndarray) -> np.ndarray:
+    def dP_dx(self, x: np_arr_f64) -> np_arr_f64:
         return np.zeros_like(x)
 
-    def d2Ac_dx2(self, x: np.ndarray) -> np.ndarray:
+    def d2Ac_dx2(self, x: np_arr_f64) -> np_arr_f64:
         return np.zeros_like(x)
 
 
@@ -84,10 +83,10 @@ class CircularUniformPinFin(Fin):
 class CircularLinearPinFin(Fin):
     r0: int | float
 
-    def dP_dx(self, x: np.ndarray) -> np.ndarray:
+    def dP_dx(self, x: np_arr_f64) -> np_arr_f64:
         return np.full_like(x, -2 * np.pi * self.r0 / self.L)
 
-    def d2Ac_dx2(self, x: np.ndarray) -> np.ndarray:
+    def d2Ac_dx2(self, x: np_arr_f64) -> np_arr_f64:
         return np.full_like(x, 2 * np.pi * self.r0**2 / L**2)
 
 
