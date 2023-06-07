@@ -1,4 +1,4 @@
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
 from dataclasses import dataclass
 from typing import Callable, final
 
@@ -7,21 +7,17 @@ import scipy
 import scipy.integrate
 from scipy.interpolate import PPoly
 
+from .axial_profile import AxialProfile
 from .cross_section import CrossSection
 from .types import np_arr_f64
 
 
 @dataclass
-class Fin(CrossSection, metaclass=ABCMeta):
+class Fin(CrossSection, AxialProfile, metaclass=ABCMeta):
     k: float
     h: float
-    L: float
     Tb: float
     Tinf: float
-
-    @abstractmethod
-    def d2Ac_dx2(self, x: np_arr_f64, y: np_arr_f64) -> np_arr_f64:
-        ...
 
     def deriv(self, x: np_arr_f64, y: np_arr_f64) -> np_arr_f64:
         y0, y1, _, y3, y4 = y
