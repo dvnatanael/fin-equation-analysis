@@ -42,7 +42,7 @@ class RegularPolygonMeta(type):
         return 2 * np.sqrt(self.n * np.tan(np.pi / self.n) * Ac)
 
 
-EquilateralTriangle = RegularPolygonMeta(3)
-Square = RegularPolygonMeta(4)
-RegularPentagon = RegularPolygonMeta(5)
-RegulareHexagon = RegularPolygonMeta(6)
+EquilateralTriangle = RegularPolygonMeta("EquilateralTriangle", 3)
+Square = RegularPolygonMeta("Square", 4)
+RegularPentagon = RegularPolygonMeta("RegularPentagon", 5)
+RegulareHexagon = RegularPolygonMeta("RegulareHexagon", 6)
