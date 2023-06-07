@@ -14,11 +14,10 @@
 # ---
 
 # %%
-from abc import ABCMeta, abstractmethod
+from dataclasses import dataclass
 from typing import Final
 
 import numpy as np
-import scipy.special
 from matplotlib import pyplot as plt
 from scipy.interpolate import PPoly
 
@@ -26,53 +25,70 @@ from fin_equation_analysis.fin.fin import Fin
 
 
 # %%
-k: Final[int] = 5  # W m-1 K-1
-h: Final[int] = 200  # W m-2 K-1
-r: Final[float] = 3e-2  # m
-L: Final[float] = 0.1  # m
+def plot_results(
+    fig: plt.Figure,
+    sol: tuple[[PPoly] * 6],
+    x: np.ndarray,
+    label: str,
+) -> None:
+    T, dT, V, Ac, dAc, P = sol
+    axs = fig.axes
+    axs[0].plot(x, P, label=label)
+    axs[0].set_ylabel(r"$P$ [mm]")
+
+    axs[1].plot(x, V, label=label)
+    axs[1].set_ylabel(r"$V{(x)}$ [mm$^3$]")
+
+    axs[2].plot(x, Ac, label=label)
+    axs[2].set_ylabel(r"$A_c{(x)}$ [mm$^2$]")
+
+    axs[3].plot(x, dAc, label=label)
+    axs[3].set_ylabel(r"$A'_c{(x)}$ [mm]")
+
+    axs[4].plot(x, T_inf + T, label=label)
+    axs[4].set_ylabel(r"$T{(x)}$ [K]")
+
+    axs[5].plot(x, dT, label=label)
+    axs[5].set_ylabel(r"$T'{(x)}$ [K / mm]")
+
+    axs[6].plot(x, -k * dT, label=label)
+    axs[6].set_ylabel(r"$q''_x = -k T'{(x)}$ [W / mm$^2$]")
+
+    axs[7].plot(x, -k * Ac * dT, label=label)
+    axs[7].set_ylabel(r"$q_x = -k A_c T'{(x)}$ [W]")
+
+
+# %%
+k: Final[int] = 5e-3  # W mm-1 K-1
+h: Final[int] = 200e-6  # W mm-2 K-1
+r: Final[float] = 3e1  # mm
+L: Final[float] = 1e2  # mm
 T_b: Final[int] = 398  # K
 T_inf: Final[int] = 298  # K
 
 
 # %%
-class CircularPinFin(Fin, metaclass=ABCMeta):
-    def __init__(
-        self,
-        k: int | float,
-        h: int | float,
-        r: int | float,
-        L: int | float,
-        Tb: int | float,
-        Tinf: int | float,
-    ) -> None:
-        self.k = k
-        self.h = h
-        self.r0 = r
-        self.L = L
-        self.Tb = Tb
-        self.Tinf = Tinf
+@dataclass
+class CircularUniformPinFin(Fin):
+    r0: int | float
 
-    @abstractmethod
-    def r(self, x: np.ndarray) -> np.ndarray:
-        ...
-
-    def P(self, x: np.ndarray) -> np.ndarray:
-        return 2 * np.pi * self.r(x)
+    def dP_dx(self, x: np.ndarray) -> np.ndarray:
+        return np.zeros_like(x)
 
     def d2Ac_dx2(self, x: np.ndarray) -> np.ndarray:
         return np.zeros_like(x)
 
 
 # %%
-class CircularUniformPinFin(CircularPinFin):
-    def r(self, x: np.ndarray) -> np.ndarray:
-        return self.r0
+@dataclass
+class CircularLinearPinFin(Fin):
+    r0: int | float
 
+    def dP_dx(self, x: np.ndarray) -> np.ndarray:
+        return np.full_like(x, -2 * np.pi * self.r0 / self.L)
 
-# %%
-class CircularLinearPinFin(CircularPinFin):
-    def r(self, x: np.ndarray) -> np.ndarray:
-        return self.r0 * (1 - x / self.L)
+    def d2Ac_dx2(self, x: np.ndarray) -> np.ndarray:
+        return np.full_like(x, 2 * np.pi * self.r0**2 / L**2)
 
 
 # %% [markdown]
@@ -90,16 +106,19 @@ class CircularLinearPinFin(CircularPinFin):
 # \begin{gathered}
 #     \begin{align*}
 #         y_0 &= \theta{(x)} & y_1 &= \theta'{(x)} = \frac{d \theta}{dx} \\
-#         y_2 &= A_c{(x)} & y_3 &= A_c'{(x)} = \frac{d A_c}{dx}\\
+#         y_2 &= V{(x)} = \int_0^x A_c\,dx & y_3 &= A_c{(x)} \\
+#         y_4 &= A_c'{(x)} = \frac{d A_c}{dx} & y_5 &= P{(x)} \\
 #     \end{align*}\\
 #     \begin{equation*}
 #         \frac{d \textbf{y}}{dx}
-#         = \begin{bmatrix} y'_0 \\ y'_1  \\ y'_2 \\ y'_3 \end{bmatrix}
-#         = \begin{bmatrix} \theta' \\ \theta'' \\ A'_c \\ A''_c \end{bmatrix}
+#         = \begin{bmatrix} y'_0 \\ y'_1  \\ y'_2 \\ y'_3 \\ y'_4 \\ y'_5 \end{bmatrix}
+#         = \begin{bmatrix} \theta' \\ \theta'' \\ A_c \\ A'_c \\ A''_c \\ P' \end{bmatrix}
 #         = \begin{bmatrix}
 #             y_1 \\
-#             - \frac{y_3}{y_2} y_1 + \frac{h P}{k y_2} y_0 \\
+#             - \frac{y_4}{y_3} y_1 + \frac{h y_5}{k y_3} y_0 \\
 #             y_3 \\
+#             y_4 \\
+#             \cdots \\
 #             \cdots
 #         \end{bmatrix}
 #     \end{equation*}
@@ -110,10 +129,14 @@ class CircularLinearPinFin(CircularPinFin):
 def bc_uniform(ya, yb):
     return np.array(
         [
+            # Temperature BCs
             ya[0] - (T_b - T_inf),  # y0(x=a) = T_b - T_inf
             yb[1],  # y1(x=b) = 0; adiabatic tip
-            ya[2] - np.pi * r**2,  # y2(x=0) = np.pi * r**2
-            yb[2] - np.pi * r**2,  # y2(x=b) = np.pi * r**2
+            # Geometry BCs
+            ya[2],
+            ya[3] - np.pi * r**2,  # y2(x=0) = np.pi * r**2
+            yb[3] - np.pi * r**2,  # y2(x=b) = np.pi * r**2
+            ya[5] - 2 * np.pi * r,
         ]
     )
 
@@ -122,49 +145,24 @@ def bc_uniform(ya, yb):
 def bc_linear(ya, yb):
     return np.array(
         [
-            ya[0] - (T_b - T_inf),  # y0(x=a) = (T_b - T_inf)
+            # Temperature BCs
+            ya[0] - (T_b - T_inf),  # y0(x=a) = T_b - T_inf
             yb[1],  # y1(x=b) = 0; adiabatic tip
-            ya[2] - np.pi * r**2,  # y2(x=0) = np.pi * r**2
-            yb[2] - 1e-14,  # y2(x=b) = 0; reduces to a point
+            # Geometry BCs
+            ya[2],
+            ya[3] - np.pi * r**2,  # y2(x=0) = np.pi * r**2
+            yb[3] - 1e-13,  # y2(x=b) = 0; reduces to a point
+            ya[5] - 2 * np.pi * r,
         ]
     )
 
 
 # %%
-def plot_results(
-    fig: plt.Figure,
-    sol: tuple[PPoly, PPoly, PPoly, PPoly],
-    x: np.ndarray,
-    label: str,
-) -> None:
-    T, dT, Ac, dAc = sol
-    axs = fig.axes
-    axs[0].plot(x * 1e3, Ac * 1e6, label=label)
-    axs[0].set_ylabel(r"$A_c{(x)}$ [mm$^2$]")
-
-    axs[1].plot(x * 1e3, dAc * 1e3, label=label)
-    axs[1].set_ylabel(r"$A'_c{(x)}$ [mm]")
-
-    axs[2].plot(x * 1e3, T_inf + T, label=label)
-    axs[2].set_ylabel(r"$T{(x)}$ [K]")
-
-    axs[3].plot(x * 1e3, dT * 1e-3, label=label)
-    axs[3].set_ylabel(r"$T'{(x)}$ [K / mm]")
-
-    axs[4].plot(x * 1e3, -k * dT * 1e-6, label=label)
-    axs[4].set_ylabel(r"$q''_x = -k T'{(x)}$ [W / mm$^2$]")
-
-    axs[5].plot(x * 1e3, -k * Ac * dT, label=label)
-    axs[5].set_ylabel(r"$q_x = -k A_c T'{(x)}$ [W]")
-
-
-# %%
 x_plot = np.linspace(0, L, 100001)
-sol_uniform = CircularUniformPinFin(k, h, r, L, T_b, T_inf).solve(bc_uniform)(x_plot)
-sol_linear = CircularLinearPinFin(k, h, r, L, T_b, T_inf).solve(bc_linear)(x_plot)
+sol_uniform = CircularUniformPinFin(k, h, L, T_b, T_inf, r).solve(bc_uniform)(x_plot)
+sol_linear = CircularLinearPinFin(k, h, L, T_b, T_inf, r).solve(bc_linear)(x_plot)
 
-# %%
-fig, _ = plt.subplots(num=1, figsize=(10, 12), nrows=3, ncols=2, sharex="all")
+fig, axs = plt.subplots(num=1, figsize=(10, 12), nrows=4, ncols=2, sharex="all")
 plot_results(fig, sol_uniform, x_plot, "constant cross-section")
 plot_results(fig, sol_linear, x_plot, "linear profile")
 
@@ -175,8 +173,8 @@ for ax in fig.axes:
 plt.tight_layout()
 
 # %%
-_, dT_uniform, Ac_uniform, _ = sol_uniform
-_, dT_linear, Ac_linear, _ = sol_linear
+T_uniform, dT_uniform, V_uniform, Ac_uniform, dAc_uniform, P_uniform = sol_uniform
+T_linear, dT_linear, V_linear, Ac_linear, dAc_linear, P_linear = sol_linear
 q_uniform = (-k * Ac_uniform * dT_uniform)[5]
 q_linear = (-k * Ac_linear * dT_linear)[5]
 f"{q_uniform = }", f"{q_linear = }"
@@ -190,18 +188,3 @@ f"{n_uniform = }", f"{n_linear = }"
 M = np.sqrt(h * (2 * np.pi * r) * k * (np.pi * r**2)) * (T_b - T_inf)
 m = np.sqrt((2 * h) / (k * r))
 M, m, m * L
-
-# %%
-q_uniform = M * np.tanh(m * L)
-q_linear = (
-    M
-    * np.sqrt(1 + (r / L) ** 2)
-    * scipy.special.iv(2, 2 * m * L)
-    / scipy.special.iv(1, 2 * m * L)
-)
-f"{q_uniform = }", f"{q_linear = }"
-
-# %%
-n_uniform = np.tanh(m * L) / (m * L)
-n_linear = 2 / (m * L) * scipy.special.iv(2, 2 * m * L) / scipy.special.iv(1, 2 * m * L)
-f"{n_uniform = }", f"{n_linear = }"

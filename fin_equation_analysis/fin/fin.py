@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+from dataclasses import dataclass
 from typing import Callable, cast, final
 
 import numpy as np
@@ -7,6 +8,7 @@ import scipy.integrate
 from scipy.interpolate import PPoly
 
 
+@dataclass
 class Fin(metaclass=ABCMeta):
     k: int | float
     h: int | float
@@ -15,22 +17,23 @@ class Fin(metaclass=ABCMeta):
     Tinf: int | float
 
     @abstractmethod
-    def P(self, x: np.ndarray) -> np.ndarray:
+    def dP_dx(self, x: np.ndarray) -> np.ndarray:
         ...
 
     @abstractmethod
     def d2Ac_dx2(self, x: np.ndarray) -> np.ndarray:
         ...
 
-    @final
-    def governing_equation(self, x, y) -> np.ndarray:
-        y0, y1, y2, y3 = y
+    def deriv(self, x, y) -> np.ndarray:
+        y0, y1, _, y3, y4, y5 = y
         return np.vstack(
             [
                 y1,
-                -y3 * y1 / y2 + (self.h * self.P(x)) / (self.k * y2) * y0,
+                -y4 * y1 / y3 + (self.h * y5) / (self.k * y3) * y0,
                 y3,
+                y4,
                 self.d2Ac_dx2(x),
+                self.dP_dx(x),
             ]
         )
 
@@ -38,11 +41,12 @@ class Fin(metaclass=ABCMeta):
     def solve(
         self,
         bc: Callable[[np.ndarray, np.ndarray], np.ndarray],
-    ) -> tuple[PPoly, PPoly, PPoly, PPoly]:
-        x = np.linspace(0, self.L, 5)
-        y = np.ones((4, x.size))
+    ) -> tuple[PPoly, PPoly, PPoly, PPoly, PPoly, PPoly]:
+        x = np.linspace(0, self.L, 500)
+        y = np.ones((6, x.size))
 
-        self.res = scipy.integrate.solve_bvp(
-            fun=self.governing_equation, bc=bc, x=x, y=y
+        self.res = scipy.integrate.solve_bvp(fun=self.deriv, bc=bc, x=x, y=y)
+        return cast(
+            tuple[PPoly, PPoly, PPoly, PPoly, PPoly, PPoly],
+            self.res.sol,
         )
-        return cast(tuple[PPoly, PPoly, PPoly, PPoly], self.res.sol)
