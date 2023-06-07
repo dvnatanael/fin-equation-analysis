@@ -150,9 +150,9 @@ def bc_linear(ya, yb):
             yb[1],  # θ(L) = 0; adiabatic tip
             # Geometry BCs
             ya[2],  # V(0) = 0
-            ya[3] - np.pi * r**2,  # Ac(0) = πr²
+            yb[2] - np.pi * r**2 * L,  # V(L) = πr²L
             yb[3] - 1e-13,  # Ac(L) = 0; reduces to a point
-            ya[5] - 2 * np.pi * r,  # P(0) = 2πr
+            yb[5],  # P(L) = 0
         ]
     )
 
