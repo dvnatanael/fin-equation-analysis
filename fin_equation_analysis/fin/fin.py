@@ -13,21 +13,25 @@ from .types import np_arr_f64
 
 
 @dataclass
-class Fin(CrossSection, AxialProfile, metaclass=ABCMeta):
+class Fin(metaclass=ABCMeta):
     k: float
     h: float
+    L: float
     Tb: float
     Tinf: float
+    cross_section: CrossSection
+    profile: AxialProfile
 
     def deriv(self, x: np_arr_f64, y: np_arr_f64) -> np_arr_f64:
         y0, y1, _, y3, y4 = y
         return np.vstack(
             [
                 y1,
-                -y4 * y1 / y3 + (self.h * self.P(np.abs(y3))) / (self.k * y3) * y0,
+                -y4 * y1 / y3
+                + (self.h * self.cross_section.P(np.abs(y3))) / (self.k * y3) * y0,
                 y3,
                 y4,
-                self.d2Ac_dx2(x, y),
+                self.profile.d2Ac_dx2(x, y),
             ]
         )
 
