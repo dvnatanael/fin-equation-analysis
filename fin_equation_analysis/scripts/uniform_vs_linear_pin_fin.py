@@ -20,7 +20,7 @@ from typing import Final
 import numpy as np
 from matplotlib import pyplot as plt
 
-from fin_equation_analysis.fin.fin import Fin, np_arr_f64
+from fin_equation_analysis.fin.fin import CrossSection, Fin, np_arr_f64
 
 
 # %%
@@ -30,9 +30,9 @@ def plot_results(
     x: np_arr_f64,
     label: str,
 ) -> None:
-    T, dT, V, Ac, dAc, P = sol
+    T, dT, V, Ac, dAc = sol
     axs = fig.axes
-    axs[0].plot(x, P, label=label)
+    axs[0].plot(x, 2 * np.sqrt(np.pi * Ac), label=label)
     axs[0].set_ylabel(r"$P$ [mm]")
 
     axs[1].plot(x, V, label=label)
@@ -60,34 +60,30 @@ def plot_results(
 # %%
 k: Final[float] = 5e-3  # W mm-1 K-1
 h: Final[float] = 200e-6  # W mm-2 K-1
-r: Final[float] = 3e1  # mm
-L: Final[float] = 1e2  # mm
+r: Final[float] = 1e-1  # mm
+L: Final[float] = 5e0  # mm
 T_b: Final[float] = 398.0  # K
 T_inf: Final[float] = 298.0  # K
 
 
 # %%
+class CircularCrossSection(CrossSection):
+    def P(self, Ac: np_arr_f64) -> np_arr_f64:
+        return 2 * np.sqrt(np.pi * np.abs(Ac))
+
+
+# %%
 @dataclass
-class CircularUniformPinFin(Fin):
-    r0: int | float
-
-    def dP_dx(self, x: np_arr_f64) -> np_arr_f64:
-        return np.zeros_like(x)
-
-    def d2Ac_dx2(self, x: np_arr_f64) -> np_arr_f64:
+class CircularUniformPinFin(Fin, CircularCrossSection):
+    def d2Ac_dx2(self, x: np_arr_f64, y: np_arr_f64) -> np_arr_f64:
         return np.zeros_like(x)
 
 
 # %%
 @dataclass
-class CircularLinearPinFin(Fin):
-    r0: int | float
-
-    def dP_dx(self, x: np_arr_f64) -> np_arr_f64:
-        return np.full_like(x, -2 * np.pi * self.r0 / self.L)
-
-    def d2Ac_dx2(self, x: np_arr_f64) -> np_arr_f64:
-        return np.full_like(x, 2 * np.pi * self.r0**2 / L**2)
+class CircularLinearPinFin(Fin, CircularCrossSection):
+    def d2Ac_dx2(self, x: np_arr_f64, y: np_arr_f64) -> np_arr_f64:
+        return np.full_like(x, 2 * y[3][0] / L**2)
 
 
 # %% [markdown]
@@ -106,22 +102,23 @@ class CircularLinearPinFin(Fin):
 #     \begin{align*}
 #         y_0 &= \theta{(x)} & y_1 &= \theta'{(x)} = \frac{d \theta}{dx} \\
 #         y_2 &= V{(x)} = \int_0^x A_c\,dx & y_3 &= A_c{(x)} \\
-#         y_4 &= A_c'{(x)} = \frac{d A_c}{dx} & y_5 &= P{(x)} \\
+#         y_4 &= A_c'{(x)} = \frac{d A_c}{dx}
 #     \end{align*}\\
 #     \begin{equation*}
 #         \frac{d \textbf{y}}{dx}
-#         = \begin{bmatrix} y'_0 \\ y'_1  \\ y'_2 \\ y'_3 \\ y'_4 \\ y'_5 \end{bmatrix}
-#         = \begin{bmatrix} \theta' \\ \theta'' \\ A_c \\ A'_c \\ A''_c \\ P' \end{bmatrix}
+#         = \begin{bmatrix} y'_0 \\ y'_1  \\ y'_2 \\ y'_3 \\ y'_4 \end{bmatrix}
+#         = \begin{bmatrix} \theta' \\ \theta'' \\ A_c \\ A'_c \\ A''_c \end{bmatrix}
 #         = \begin{bmatrix}
 #             y_1 \\
-#             - \frac{y_4}{y_3} y_1 + \frac{h y_5}{k y_3} y_0 \\
+#             - \frac{y_4}{y_3} y_1 + \frac{h P}{k y_3} y_0 \\
 #             y_3 \\
 #             y_4 \\
-#             \cdots \\
 #             \cdots
 #         \end{bmatrix}
 #     \end{equation*}
 # \end{gathered}
+# where for a polygons, $P = k \sqrt{A_c}$
+# (ref: https://link.springer.com/chapter/10.1007/978-1-4899-2124-6_12)
 
 
 # %%
@@ -130,12 +127,11 @@ def bc_uniform(ya, yb):
         [
             # Temperature BCs
             ya[0] - (T_b - T_inf),  # θ(0) = T_b - T_inf
-            yb[1],  # θ(L) = 0; adiabatic tip
+            h * yb[0] + k * yb[1],  # θ'(L) = 0; adiabatic tip
             # Geometry BCs
-            ya[2],
+            ya[2],  # V(0) = 0
             ya[3] - np.pi * r**2,  # Ac(0) = πr²
             yb[3] - np.pi * r**2,  # Ac(L) = πr²
-            ya[5] - 2 * np.pi * r,  # P(0) = 2πr
         ]
     )
 
@@ -146,20 +142,21 @@ def bc_linear(ya, yb):
         [
             # Temperature BCs
             ya[0] - (T_b - T_inf),  # θ(0) = T_b - T_inf
-            yb[1],  # θ(L) = 0; adiabatic tip
+            yb[1],  # θ'(L) = 0; adiabatic tip
             # Geometry BCs
             ya[2],  # V(0) = 0
             yb[2] - np.pi * r**2 * L,  # V(L) = πr²L
-            yb[3] - 1e-13,  # Ac(L) = 0; reduces to a point
-            yb[5],  # P(L) = 0
+            yb[3] - 1e-12,  # Ac(L) = 0; reduces to a point
         ]
     )
 
 
 # %%
 x_plot = np.linspace(0, L, 100001)
-sol_uniform = CircularUniformPinFin(k, h, L, T_b, T_inf, r).solve(bc_uniform)(x_plot)
-sol_linear = CircularLinearPinFin(k, h, L, T_b, T_inf, r).solve(bc_linear)(x_plot)
+sol_uniform = CircularUniformPinFin(k, h, L, T_b, T_inf).solve(bc_uniform)(x_plot)
+linear = CircularLinearPinFin(k, h, L, T_b, T_inf)
+sol_linear = linear.solve(bc_linear)(x_plot)
+print(linear.res.status)
 
 fig, axs = plt.subplots(num=1, figsize=(10, 12), nrows=4, ncols=2, sharex="all")
 plot_results(fig, sol_uniform, x_plot, "constant cross-section")
@@ -170,20 +167,3 @@ for ax in fig.axes:
     ax.grid(True)
     ax.legend()
 plt.tight_layout()
-
-# %%
-T_uniform, dT_uniform, V_uniform, Ac_uniform, dAc_uniform, P_uniform = sol_uniform
-T_linear, dT_linear, V_linear, Ac_linear, dAc_linear, P_linear = sol_linear
-q_uniform = (-k * Ac_uniform * dT_uniform)[5]
-q_linear = (-k * Ac_linear * dT_linear)[5]
-f"{q_uniform = }", f"{q_linear = }"
-
-# %%
-n_uniform = q_uniform / (h * 2 * np.pi * r * L * (T_b - T_inf))
-n_linear = q_linear / (h * np.pi * r * np.sqrt(L**2 + r**2) * (T_b - T_inf))
-f"{n_uniform = }", f"{n_linear = }"
-
-# %%
-M = np.sqrt(h * (2 * np.pi * r) * k * (np.pi * r**2)) * (T_b - T_inf)
-m = np.sqrt((2 * h) / (k * r))
-M, m, m * L

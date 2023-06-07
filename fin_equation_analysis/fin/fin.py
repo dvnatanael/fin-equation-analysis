@@ -12,8 +12,14 @@ from scipy.interpolate import PPoly
 np_arr_f64 = npt.NDArray[np.float64]
 
 
+class CrossSection(metaclass=ABCMeta):
+    @abstractmethod
+    def P(self, Ac: np_arr_f64) -> np_arr_f64:
+        ...
+
+
 @dataclass
-class Fin(metaclass=ABCMeta):
+class Fin(CrossSection, metaclass=ABCMeta):
     k: float
     h: float
     L: float
@@ -21,23 +27,18 @@ class Fin(metaclass=ABCMeta):
     Tinf: float
 
     @abstractmethod
-    def dP_dx(self, x: np_arr_f64) -> np_arr_f64:
-        ...
-
-    @abstractmethod
-    def d2Ac_dx2(self, x: np_arr_f64) -> np_arr_f64:
+    def d2Ac_dx2(self, x: np_arr_f64, y: np_arr_f64) -> np_arr_f64:
         ...
 
     def deriv(self, x: np_arr_f64, y: np_arr_f64) -> np_arr_f64:
-        y0, y1, _, y3, y4, y5 = y
+        y0, y1, _, y3, y4 = y
         return np.vstack(
             [
                 y1,
-                -y4 * y1 / y3 + (self.h * y5) / (self.k * y3) * y0,
+                -y4 * y1 / y3 + (self.h * self.P(y3)) / (self.k * y3) * y0,
                 y3,
                 y4,
-                self.d2Ac_dx2(x),
-                self.dP_dx(x),
+                self.d2Ac_dx2(x, y),
             ]
         )
 
@@ -46,8 +47,10 @@ class Fin(metaclass=ABCMeta):
         self,
         bc: Callable[[np_arr_f64, np_arr_f64], np_arr_f64],
     ) -> PPoly:
-        x = np.linspace(0, self.L, 500)
-        y = np.ones((6, x.size))
+        x = np.linspace(0, self.L, 5)
+        y = np.ones((5, x.size))
 
-        self.res = scipy.integrate.solve_bvp(fun=self.deriv, bc=bc, x=x, y=y)
+        self.res = scipy.integrate.solve_bvp(
+            fun=self.deriv, bc=bc, x=x, y=y, max_nodes=100000
+        )
         return self.res.sol
