@@ -18,6 +18,7 @@ from typing import Final
 
 import numpy as np
 from matplotlib import pyplot as plt
+from ruamel.yaml import YAML
 
 from fin_equation_analysis.fin.axial_profile import LinearProfile, UniformProfile
 from fin_equation_analysis.fin.cross_section import CircleCrossSection
@@ -26,12 +27,16 @@ from fin_equation_analysis.fin.types import np_arr_f64
 
 
 # %%
-k: Final[float] = 5e-3  # W mm-1 K-1
-h: Final[float] = 200e-6  # W mm-2 K-1
-r: Final[float] = 1e-1  # mm
-L: Final[float] = 1e1  # mm
-T_b: Final[float] = 398.0  # K
-T_inf: Final[float] = 298.0  # K
+yaml = YAML(typ="safe")
+with open("config.yaml") as f:
+    config = yaml.load(f)
+
+k: Final[float] = config["material"]["k"]
+h: Final[float] = config["material"]["h"]
+r: Final[float] = config["geometry"]["r"]
+L: Final[float] = config["geometry"]["L"]
+T_b: Final[float] = config["environment"]["Tb"]
+T_inf: Final[float] = config["environment"]["Tinf"]
 
 
 # %%
