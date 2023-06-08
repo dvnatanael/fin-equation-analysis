@@ -8,11 +8,13 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = ">=3.10,<3.12"
 jupyterlab = "^3.6.3"
+ruamel-yaml = "^0.17.31"
 
 numpy = "^1.24.3"
 sympy = "^1.11.1"
 matplotlib = "^3.7.1"
 scipy = "^1.10.0,!=1.10.1"
+scikit-image = "^0.21.0"
 
 [tool.poetry.group.dev.dependencies]
 poethepoet = "^0.20.0"
@@ -69,7 +71,6 @@ all = true
 silence = true
 
 [tool.mypy]
-mypy_path = "fin_equation_analysis"
 files = "."
 explicit_package_bases = true
 namespace_packages = true

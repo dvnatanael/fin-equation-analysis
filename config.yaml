@@ -1,0 +1,9 @@
+material:
+  k: 5e-3 # W mm-1 K-1
+  h: 200e-6 # W mm-2 K-1
+geometry:
+  r: 1e-1 # mm
+  L: 1e1 # mm
+environment:
+  Tb: 398.0 # K
+  Tinf: 298.0 # K
