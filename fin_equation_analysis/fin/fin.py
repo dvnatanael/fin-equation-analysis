@@ -1,4 +1,3 @@
-from abc import ABCMeta
 from dataclasses import dataclass
 from typing import Callable, final
 
@@ -13,7 +12,7 @@ from .types import np_arr_f64
 
 
 @dataclass
-class Fin(metaclass=ABCMeta):
+class Fin:
     k: float
     h: float
     cross_section: CrossSection
