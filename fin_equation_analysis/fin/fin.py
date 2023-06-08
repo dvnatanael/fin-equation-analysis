@@ -13,13 +13,25 @@ from .types import np_arr_f64
 
 @dataclass
 class Fin:
+    """A class that represent a fin."""
+
     k: float
     h: float
     cross_section: CrossSection
     profile: AxialProfile
 
     def deriv(self, x: np_arr_f64, y: np_arr_f64) -> np_arr_f64:
-        y0, y1, _, y3, y4 = y
+        """Calculates the derivative of the system defined by the fin equation.
+
+        Args:
+            x: A 1-D independent variable with shape (m,).
+            y: An 5-D vector-valued function, with shape (5, m).
+
+        Returns:
+            The derivative of y.
+        """
+        # set y0 = θ(x), y1 = θ'(x), y2 = V(x), y3 = Ac(x), y4 = Ac'(x)
+        y0, y1, _, y3, y4 = y  # unpack y into n variables, each with shape (m,)
         return np.vstack(
             [
                 y1,
@@ -36,7 +48,16 @@ class Fin:
         self,
         bc: Callable[[np_arr_f64, np_arr_f64], np_arr_f64],
     ) -> PPoly:
-        x = np.linspace(0, self.profile.L, 5)
+        """Solves the general fin equation.
+
+        Args:
+            bc: A callable that given the boundary state,
+                returns the residuals of the boundary conditions.
+
+        Returns:
+            A `PPoly` that represents y(x).
+        """
+        x = np.linspace(0, self.profile.L, 5)  # set the initial number of nodes as 5
         y = np.ones((5, x.size))
 
         self.res = scipy.integrate.solve_bvp(
