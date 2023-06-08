@@ -27,7 +27,7 @@ class Fin:
                 + (self.h * self.cross_section.P(np.abs(y3))) / (self.k * y3) * y0,
                 y3,
                 y4,
-                self.profile.d2Ac_dx2(x, y),
+                self.profile.d2Ac_dx2(x, y3),
             ]
         )
 
