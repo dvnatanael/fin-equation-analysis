@@ -14,12 +14,12 @@
 # ---
 
 # %%
-from dataclasses import dataclass
 from typing import Final
 
 import numpy as np
 from matplotlib import pyplot as plt
 
+from fin_equation_analysis.fin.axial_profile import LinearProfile, UniformProfile
 from fin_equation_analysis.fin.cross_section import CircleCrossSection
 from fin_equation_analysis.fin.fin import Fin
 from fin_equation_analysis.fin.types import np_arr_f64
@@ -29,7 +29,7 @@ from fin_equation_analysis.fin.types import np_arr_f64
 k: Final[float] = 5e-3  # W mm-1 K-1
 h: Final[float] = 200e-6  # W mm-2 K-1
 r: Final[float] = 1e-1  # mm
-L: Final[float] = 5e0  # mm
+L: Final[float] = 1e1  # mm
 T_b: Final[float] = 398.0  # K
 T_inf: Final[float] = 298.0  # K
 
@@ -66,20 +66,6 @@ def plot_results(
 
     axs[7].plot(x, -k * Ac * dT, label=label)
     axs[7].set_ylabel(r"$q_x = -k A_c T'{(x)}$ [W]")
-
-
-# %%
-@dataclass
-class CircularUniformPinFin(CircleCrossSection, Fin):
-    def d2Ac_dx2(self, x: np_arr_f64, y: np_arr_f64) -> np_arr_f64:
-        return np.zeros_like(x)
-
-
-# %%
-@dataclass
-class CircularLinearPinFin(CircleCrossSection, Fin):
-    def d2Ac_dx2(self, x: np_arr_f64, y: np_arr_f64) -> np_arr_f64:
-        return np.full_like(x, 2 * y[3][0] / L**2)
 
 
 # %% [markdown]
@@ -149,11 +135,14 @@ def bc_linear(ya, yb):
 
 
 # %%
+ciruclar_uniform_fin = Fin(k, h, L, T_b, T_inf, CircleCrossSection(), UniformProfile(L))
+circular_linear_fin = Fin(k, h, L, T_b, T_inf, CircleCrossSection(), LinearProfile(L))
+
+# %%
 x_plot = np.linspace(0, L, 100001)
-sol_uniform = CircularUniformPinFin(k, h, L, T_b, T_inf).solve(bc_uniform)(x_plot)
-linear = CircularLinearPinFin(k, h, L, T_b, T_inf)
-sol_linear = linear.solve(bc_linear)(x_plot)
-print(linear.res.status)
+sol_uniform = ciruclar_uniform_fin.solve(bc_uniform)(x_plot)
+sol_linear = circular_linear_fin.solve(bc_linear)(x_plot)
+print(circular_linear_fin.res.status)
 
 fig, axs = plt.subplots(num=1, figsize=(10, 12), nrows=4, ncols=2, sharex="all")
 plot_results(fig, sol_uniform, x_plot, "constant cross-section")
