@@ -33,13 +33,13 @@ class CircleCrossSection(CrossSection):
         return 2 * np.sqrt(np.pi * np.abs(Ac))
 
 
-class RectangleCrossSectionMeta(type):
-    """A metaclass that creates classes representing rectangular cross sections
-    of varying widths, where it is assumed that t << w.
+class RectangleCrossSection(CrossSection):
+    """A class that represents rectangular cross sections of varying widths,
+    where it is assumed that t << w.
     """
 
-    def __init__(self, name: str, w: float) -> None:
-        super().__init__(self)
+    def __init__(self, w: float) -> None:
+        self.w = w
 
     def P(self, Ac: np_arr_f64) -> np_arr_f64:
         """Calculates the perimeter of a rectangle.
