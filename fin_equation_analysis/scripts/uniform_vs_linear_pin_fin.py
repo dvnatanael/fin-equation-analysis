@@ -123,7 +123,7 @@ def bc_uniform(ya, yb):
         [
             # Temperature BCs
             ya[0] - (T_b - T_inf),  # θ(0) = T_b - T_inf
-            h * yb[0] + k * yb[1],  # θ'(L) = 0; adiabatic tip
+            h * yb[0] + k * yb[1],  # hθ(L) + kθ'(L) = 0; active tip
             # Geometry BCs
             ya[2],  # V(0) = 0
             ya[3] - np.pi * r**2,  # Ac(0) = πr²
@@ -138,7 +138,8 @@ def bc_linear(ya, yb):
         [
             # Temperature BCs
             ya[0] - (T_b - T_inf),  # θ(0) = T_b - T_inf
-            yb[1],  # θ'(L) = 0; adiabatic tip
+            h * yb[0] + k * yb[1],  # hθ(L) + kθ'(L) = 0; active tip
+            # yb[1],  # we can also use an adiabatic tip here, since Ac(L) = 0
             # Geometry BCs
             ya[2],  # V(0) = 0
             yb[2] - np.pi * r**2 * L,  # V(L) = πr²L
