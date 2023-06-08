@@ -135,8 +135,8 @@ def bc_linear(ya, yb):
 
 
 # %%
-ciruclar_uniform_fin = Fin(k, h, L, T_b, T_inf, CircleCrossSection(), UniformProfile(L))
-circular_linear_fin = Fin(k, h, L, T_b, T_inf, CircleCrossSection(), LinearProfile(L))
+ciruclar_uniform_fin = Fin(k, h, CircleCrossSection(), UniformProfile(L))
+circular_linear_fin = Fin(k, h, CircleCrossSection(), LinearProfile(L))
 
 # %%
 x_plot = np.linspace(0, L, 100001)

@@ -16,9 +16,6 @@ from .types import np_arr_f64
 class Fin(metaclass=ABCMeta):
     k: float
     h: float
-    L: float
-    Tb: float
-    Tinf: float
     cross_section: CrossSection
     profile: AxialProfile
 
@@ -40,7 +37,7 @@ class Fin(metaclass=ABCMeta):
         self,
         bc: Callable[[np_arr_f64, np_arr_f64], np_arr_f64],
     ) -> PPoly:
-        x = np.linspace(0, self.L, 5)
+        x = np.linspace(0, self.profile.L, 5)
         y = np.ones((5, x.size))
 
         self.res = scipy.integrate.solve_bvp(
