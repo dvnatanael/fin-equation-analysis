@@ -1,0 +1,7 @@
+**/__pycache__/
+**/.*_cache/
+
+.idea/
+.vscode/
+
+scratch.ipynb
